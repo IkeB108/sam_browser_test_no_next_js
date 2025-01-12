@@ -32,6 +32,6 @@ self.onmessage = async (event) => {
         self.postMessage({ type: 'fileList', data: fileListHtml });
         self.postMessage({ type: 'complete' });
     } catch (error) {
-        self.postMessage({ type: 'error', data: error.message });
+        self.postMessage({ type: 'error', data: error });
     }
 };

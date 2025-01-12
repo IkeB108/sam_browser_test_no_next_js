@@ -44,7 +44,7 @@
             } else if (type === 'complete') {
                 statusElement.textContent = 'Extraction complete.';
             } else if (type === 'error') {
-                statusElement.textContent = `Error reading zip file: ${data}`;
+                statusElement.textContent = `Error reading zip file: ${data.stack}`;
             }
         };
 
