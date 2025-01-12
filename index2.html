@@ -60,7 +60,7 @@
                 statusElement.textContent = "Extraction complete.";
             } catch (error) {
                 console.error(error);
-                statusElement.textContent = "Error reading zip file.";
+                statusElement.textContent = "Error reading zip file: " + error;
             }
         });
     </script>
