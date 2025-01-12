@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script>
+    function onBodyLoad(){
+      myParagraph = document.querySelector("#myParagraph")
+      myParagraph.innerHTML = "Javascript is working now"
+    }
+    async function storeFile(){
+      try {
+        [fileHandle] = await window.showOpenFilePicker();
+        permission = await fileHandle.requestPermission({ mode: 'read' })
+        if(permission !== "granted"){
+          myParagraph.innerHTML = "Permission not granted."
+          return
+        }
+        myParagraph.innerHTML = "Permission was likely granted."
+      } catch (error) {
+        myParagraph.innerHTML = "Error requesting file access: " + error
+      }
+    }
+    async function restoreFile(){
+      try {
+        const file = await fileHandle.getFile()
+        let fileText = await file.text()
+        myParagraph.innerHTML = "Restored file: " + fileText
+      } catch(error) {
+        myParagraph.innerHTML = "Error restoring file access: " + error
+      }
+    }
+  </script>
+</head>
+<body onload="onBodyLoad()">
+  <p id="myParagraph">Javascript hasn't started working yet.</p>
+  <button id="storeFile" onclick="storeFile()">Store file</button>
+  <button id="restoreFile" onclick="restoreFile()">Restore file</button>
+</body>
+</html>
