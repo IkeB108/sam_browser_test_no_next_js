@@ -20,7 +20,7 @@
     </style>
 </head>
 <body>
-    <h1>Zip File Extractor With Stream</h1>
+    <h1>Zip File Extractor With Stream 2</h1>
     <input type="file" id="zipInput" accept=".zip">
     <p id="status">Waiting for input...</p>
     <p id="fileList"></p>
@@ -30,7 +30,26 @@
         const statusElement = document.getElementById('status');
         const fileListElement = document.getElementById('fileList');
 
-        zipInput.addEventListener('change', async (event) => {
+        // Create the Web Worker
+        const worker = new Worker('index3worker.js');
+
+        // Listen for messages from the worker
+        worker.onmessage = (event) => {
+            const { type, data } = event.data;
+
+            if (type === 'progress') {
+                statusElement.textContent = `Processing... ${data}%`;
+            } else if (type === 'fileList') {
+                fileListElement.innerHTML = data;
+            } else if (type === 'complete') {
+                statusElement.textContent = 'Extraction complete.';
+            } else if (type === 'error') {
+                statusElement.textContent = `Error reading zip file: ${data}`;
+            }
+        };
+
+        // Handle file input
+        zipInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
 
             if (!file) {
@@ -38,46 +57,13 @@
                 return;
             }
 
-            if (!file.type.includes("zip")) {
+            if (!file.type.includes('zip')) {
                 statusElement.textContent = "Please upload a valid zip file.";
                 return;
             }
 
             statusElement.textContent = "Reading zip file...";
-
-            try {
-                // Create an unzipper instance
-                const unzipper = new fflate.Unzip();
-
-                // Handle each entry in the zip file
-                unzipper.onfile = (entry) => {
-                    let fileListHtml = fileListElement.innerHTML;
-                    fileListHtml += `${entry.name}: ${entry.originalSize} bytes<br>`;
-                    fileListElement.innerHTML = fileListHtml;
-                };
-
-                // Create a custom writable stream to feed the unzipper
-                const writableStream = new WritableStream({
-                    write(chunk) {
-                        unzipper.push(chunk);
-                    },
-                    close() {
-                        statusElement.textContent = "Extraction complete.";
-                    },
-                    abort(err) {
-                        console.error("Stream aborted:", err);
-                        statusElement.textContent = "Error extracting zip file.";
-                    }
-                });
-
-                // Pipe the file stream to the custom writable stream
-                const stream = file.stream();
-                await stream.pipeTo(writableStream);
-
-            } catch (error) {
-                console.error(error);
-                statusElement.textContent = "Error reading zip file: " + error;
-            }
+            worker.postMessage(file);
         });
     </script>
 </body>
