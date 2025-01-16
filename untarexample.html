@@ -37,8 +37,8 @@
                 )
             };
             reader.onerror = function (event) {
-                console.log('FileReader Error', event);
-                onTarError('FileReader Error', Object.keys(event));
+                console.log('FileReader Error', event.message);
+                onTarError('FileReader Error', event.message);
             };
 
             reader.readAsArrayBuffer(uploadedFile);
@@ -69,7 +69,7 @@
         setInterval(cycleThroughImages, 100)
     </script>
     <p id="fileNameParagraph">
-        (File name goes here v2)
+        (File name goes here v3)
     </p>
     <div>
         Choose a file to untar:
