@@ -7,6 +7,11 @@
 <body onload="onBodyLoad()">
     <script type='text/javascript'>
         'use strict';
+        
+        addEventListener("error", (event) => {
+            console.log("error event listener here", event)
+        })
+        
         let allExtractedFiles = null
         function onTarError(title, err) { // onError
             console.log(err)
@@ -37,8 +42,8 @@
                 )
             };
             reader.onerror = function (event) {
-                console.log('FileReader Error', event.message);
-                onTarError('FileReader Error', event.message);
+                console.log('FileReader Error', reader.error.message);
+                onTarError('FileReader Error', reader.error.message);
             };
 
             reader.readAsArrayBuffer(uploadedFile);
@@ -49,6 +54,7 @@
         let fileNameParagraph = null;
         
         function onBodyLoad(){
+          eval("const s;")
           imageIndex = 0
           imageElement = new Image()
           document.body.appendChild(imageElement)
