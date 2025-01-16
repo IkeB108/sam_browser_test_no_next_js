@@ -9,6 +9,7 @@
         'use strict';
         let allExtractedFiles = null
         function onTarError(title, err) { // onError
+            console.log(err)
             document.getElementById('results').textContent = '';
             document.getElementById('errorMessage').textContent = title + ' : \n' + err;
             document.getElementById('errorMessage').style.display = 'inherit';
@@ -31,13 +32,13 @@
                     },
                     function (err) {
                         console.error(err.currentTarget)
-                        onTarError('Untar Error');
+                        onTarError('Untar Error', Object.keys(err));
                     }
                 )
             };
             reader.onerror = function (event) {
                 console.log('FileReader Error', event);
-                onTarError('FileReader Error', event);
+                onTarError('FileReader Error', Object.keys(event));
             };
 
             reader.readAsArrayBuffer(uploadedFile);
@@ -68,7 +69,7 @@
         setInterval(cycleThroughImages, 100)
     </script>
     <p id="fileNameParagraph">
-        (File name goes here)
+        (File name goes here v2)
     </p>
     <div>
         Choose a file to untar:
