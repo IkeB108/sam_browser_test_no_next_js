@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type='text/javascript' src="untarProgressivePromise.js"></script>
+    <script type='text/javascript' src="untar.js"></script>
+</head>
+<body onload="onBodyLoad()">
+    <script type='text/javascript'>
+        'use strict';
+        let allExtractedFiles = null
+        function onTarError(title, err) { // onError
+            document.getElementById('results').textContent = '';
+            document.getElementById('errorMessage').textContent = title + ' : \n' + err;
+            document.getElementById('errorMessage').style.display = 'inherit';
+        }
+
+        function clickedUntar(e) {
+            // Reset GUI
+            document.getElementById('errorMessage').style.display = 'none';
+
+            // Get the uploaded File
+            const uploadedFile = document.getElementById('fileInput').files[0];
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                untar(reader.result).then(
+                    function (extractedFiles) { // onSuccess
+                        // document.getElementById('results').textContent = JSON.stringify(extractedFiles, null, 2);
+                        document.getElementById('results').textContent = 'Extracted files';
+                        allExtractedFiles = extractedFiles
+                    },
+                    function (err) {
+                        console.error(err.currentTarget)
+                        onTarError('Untar Error');
+                    }
+                )
+            };
+            reader.onerror = function (event) {
+                console.log('FileReader Error', event);
+                onTarError('FileReader Error', event);
+            };
+
+            reader.readAsArrayBuffer(uploadedFile);
+        }
+        
+        let imageIndex = 0;
+        let imageElement = null;
+        let fileNameParagraph = null;
+        
+        function onBodyLoad(){
+          imageIndex = 0
+          imageElement = new Image()
+          document.body.appendChild(imageElement)
+          fileNameParagraph = document.getElementById('fileNameParagraph')
+        }
+        
+        function cycleThroughImages(){
+          if(allExtractedFiles){
+            const extractedFile = allExtractedFiles[imageIndex]
+            if(extractedFile){
+              fileNameParagraph.textContent = extractedFile.name
+              imageElement.src = extractedFile.getBlobUrl()
+              imageIndex = (imageIndex + 1) % allExtractedFiles.length
+            }
+          }
+        }
+        
+        setInterval(cycleThroughImages, 100)
+    </script>
+    <p id="fileNameParagraph">
+        (File name goes here)
+    </p>
+    <div>
+        Choose a file to untar:
+        <br>
+        <input type="file" id="fileInput">
+        <br><br>
+        <button onclick="clickedUntar()">Untar it!</button>
+        <br><br>
+        <p id="errorMessage" style="display: none">We could not untar it...</p>
+        <div id="results" style="font-family: monospace; white-space: pre;"></div>
+</div>
+</body>
+</html>

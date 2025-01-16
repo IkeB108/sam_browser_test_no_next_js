@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIP File Viewer</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #fileContents {
+            margin-top: 20px;
+        }
+        .file-item {
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .file-content {
+            white-space: pre-wrap;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .error {
+            color: red;
+            padding: 10px;
+            background: #fff0f0;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>ZIP File Viewer</h1>
+    <input type="file" accept=".zip" id="fileInput">
+    <div id="fileContents"></div>
+
+    <script>
+        // Create worker from external file
+        const worker = new Worker('index5worker.js');
+
+        // Handle file input
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Clear previous contents
+                document.getElementById('fileContents').innerHTML = '';
+                
+                // Show loading state
+                const loadingDiv = document.createElement('div');
+                loadingDiv.textContent = 'Processing ZIP file...';
+                document.getElementById('fileContents').appendChild(loadingDiv);
+                
+                worker.postMessage(file);
+            }
+        });
+
+        // Handle worker response
+        worker.onmessage = function(e) {
+            const contentsDiv = document.getElementById('fileContents');
+            contentsDiv.innerHTML = '';
+            
+            // Handle error messages from worker
+            if (e.data.error) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = 'Error: ' + e.data.error;
+                contentsDiv.appendChild(errorDiv);
+                return;
+            }
+            
+            // Handle successful file processing
+            const files = e.data;
+            
+            for (const [filename, content] of Object.entries(files)) {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'file-item';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'file-name';
+                nameDiv.textContent = filename;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'file-content';
+                contentDiv.textContent = content;
+                
+                fileDiv.appendChild(nameDiv);
+                fileDiv.appendChild(contentDiv);
+                contentsDiv.appendChild(fileDiv);
+            }
+        };
+
+        // Handle worker errors
+        worker.onerror = function(e) {
+            const contentsDiv = document.getElementById('fileContents');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = 'Worker error: ' + e.message;
+            contentsDiv.innerHTML = '';
+            contentsDiv.appendChild(errorDiv);
+        };
+    </script>
+</body>
+</html>

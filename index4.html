@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zip File Stream Unzipper</title>
+    <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.0/umd/index.min.js"></script>
+</head>
+<body>
+    <h1>Upload and Unzip a Zip File</h1>
+    <input type="file" id="zipInput" accept=".zip">
+    <p id="status">Waiting for input...</p>
+    <ul id="fileList"></ul>
+
+    <script>
+        async function unzipStream(stream) {
+          const unzipper = new fflate.Unzip((entry) => {
+                console.log(entry)
+                let chunks = [];
+                entry.ondata = (err, chunk, final) => {
+                    console.log("there was data")
+                    if (err) {
+                        console.error("Error reading entry:", err);
+                        return;
+                    }
+                    chunks.push(chunk);
+                    if (final) {
+                        const fileContent = new TextDecoder().decode(fflate.concat(chunks));
+                        const li = document.createElement('li');
+                        li.textContent = `${entry.name}: ${fileContent.length} bytes`;
+                        document.getElementById('fileList').appendChild(li);
+                    }
+                };
+            });
+
+            const reader = stream.getReader();
+            let done, value;
+            while (({ done, value } = await reader.read()), !done) {
+                unzipper.push(value);
+            }
+            unzipper.push(new Uint8Array(0), true); // Signal the end of the stream
+        }
+
+        document.getElementById('zipInput').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file || !file.type.includes('zip')) {
+                document.getElementById('status').textContent = "Please select a valid zip file.";
+                return;
+            }
+            document.getElementById('status').textContent = "Processing...";
+            unzipStream(file.stream());
+        });
+    </script>
+</body>
+</html>

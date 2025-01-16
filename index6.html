@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAR File Viewer</title>
+    <script src="https://cdn.skypack.dev/tar-stream/"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #status {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        #fileList {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>TAR File Viewer</h1>
+    <p>Upload a .tar file to view its contents. Large files are processed efficiently using streaming.</p>
+    
+    <input type="file" id="fileInput" accept=".tar" />
+    <div id="status">Status: Ready to process file</div>
+    <div id="fileList"></div>
+
+    <script>
+        const worker = new Worker('index6worker.js');
+        const status = document.getElementById('status');
+        const fileList = document.getElementById('fileList');
+        const fileInput = document.getElementById('fileInput');
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            status.textContent = 'Status: Starting file processing...';
+            fileList.innerHTML = '';
+
+            // Create a ReadableStream from the file
+            const stream = file.stream();
+            const reader = stream.getReader();
+
+            // Process the file in chunks
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                worker.postMessage({ chunk: value }, [value.buffer]);
+            }
+
+            // Signal end of stream
+            worker.postMessage({ done: true });
+        });
+
+        worker.onmessage = (e) => {
+            if (e.data.type === 'status') {
+                status.textContent = 'Status: ' + e.data.message;
+            } else if (e.data.type === 'file') {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'file-item';
+                fileDiv.innerHTML = `
+                    <span>${e.data.name}</span>
+                    <span>${e.data.size} bytes</span>
+                `;
+                fileList.appendChild(fileDiv);
+            }
+        };
+
+        worker.onerror = (error) => {
+            status.textContent = 'Status: Error - ' + error.message;
+        };
+    </script>
+</body>
+</html>
